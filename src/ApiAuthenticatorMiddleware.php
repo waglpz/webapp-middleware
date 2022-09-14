@@ -8,34 +8,32 @@ use Phpro\ApiProblem\Exception\ApiProblemException;
 use Phpro\ApiProblem\Http\UnauthorizedProblem;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Waglpz\Webapp\Security\ApiBasicAuthenticator;
+use Waglpz\Webapp\Security\Authenticator;
 use Waglpz\Webapp\Security\AuthStorage;
 
-/** @deprecated use ApiAuthenticatorMiddleware instead */
-final class ApiBasicAuthenticatorMiddleware implements Middleware
+final class ApiAuthenticatorMiddleware implements Middleware
 {
+    private Authenticator $authenticator;
     private AuthStorage $authStorage;
-    private ApiBasicAuthenticator $apiBasicAuthenticator;
 
-    public function __construct(
-        ApiBasicAuthenticator $apiBasicAuthenticator,
-        AuthStorage $authStorage
-    ) {
-        $this->authStorage           = $authStorage;
-        $this->apiBasicAuthenticator = $apiBasicAuthenticator;
+    public function __construct(Authenticator $authenticator, AuthStorage $authStorage)
+    {
+        $this->authenticator = $authenticator;
+        $this->authStorage   = $authStorage;
     }
 
     /** @throws ApiProblemException */
     public function __invoke(ServerRequestInterface $request, callable $next): ResponseInterface
     {
-        if (! $this->apiBasicAuthenticator->authenticate($request)) {
+        if (! $this->authenticator->authenticate($request)) {
             $apiProblem = new UnauthorizedProblem('Unauthorized');
 
             throw new ApiProblemException($apiProblem);
         }
 
         $this->authStorage->reset();
-        $this->authStorage->email = $this->apiBasicAuthenticator->username() ?? '';
+
+        $this->authStorage->email = $this->authenticator->username() ?? '';
 
         return $next($request);
     }

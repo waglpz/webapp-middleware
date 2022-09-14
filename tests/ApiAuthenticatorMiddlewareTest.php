@@ -7,23 +7,23 @@ namespace Waglpz\Webapp\Middleware\Tests;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Waglpz\Webapp\Middleware\ApiBasicAuthenticatorMiddleware;
+use Waglpz\Webapp\Middleware\ApiAuthenticatorMiddleware;
 use Waglpz\Webapp\Security\ApiBasicAuthenticator;
-use Waglpz\Webapp\Security\AuthStorage;
+use Waglpz\Webapp\Security\AuthStorageInMemory;
 use Waglpz\Webapp\Security\InMemoryUserAuthData;
 
-final class ApiBasicAuthenticatorMiddlewareTest extends TestCase
+final class ApiAuthenticatorMiddlewareTest extends TestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
-        (new AuthStorage())->reset();
+        (new AuthStorageInMemory())->reset();
     }
 
     /** @test */
     public function itHasACorrectBehaviourForKnownUser(): void
     {
-        $authStorage = new AuthStorage();
+        $authStorage = new AuthStorageInMemory();
 
         $authData                        = [
             [
@@ -34,7 +34,7 @@ final class ApiBasicAuthenticatorMiddlewareTest extends TestCase
         ];
         $authDataAdapter                 = new InMemoryUserAuthData($authData);
         $authenticator                   = new ApiBasicAuthenticator($authDataAdapter);
-        $apiBasicAuthenticatorMiddleware = new ApiBasicAuthenticatorMiddleware($authenticator, $authStorage);
+        $apiBasicAuthenticatorMiddleware = new ApiAuthenticatorMiddleware($authenticator, $authStorage);
 
         $request     = $this->createMock(ServerRequestInterface::class);
         $requestData = [
@@ -52,7 +52,7 @@ final class ApiBasicAuthenticatorMiddlewareTest extends TestCase
     /** @test */
     public function itThrownUnauthorizedApiProblemExceptionIfUserNotAuthenticated(): void
     {
-        $authStorage = new AuthStorage();
+        $authStorage = new AuthStorageInMemory();
 
         $authData                        = [
             [
@@ -63,7 +63,7 @@ final class ApiBasicAuthenticatorMiddlewareTest extends TestCase
         ];
         $authDataAdapter                 = new InMemoryUserAuthData($authData);
         $authenticator                   = new ApiBasicAuthenticator($authDataAdapter);
-        $apiBasicAuthenticatorMiddleware = new ApiBasicAuthenticatorMiddleware($authenticator, $authStorage);
+        $apiBasicAuthenticatorMiddleware = new ApiAuthenticatorMiddleware($authenticator, $authStorage);
 
         $request     = $this->createMock(ServerRequestInterface::class);
         $requestData = [

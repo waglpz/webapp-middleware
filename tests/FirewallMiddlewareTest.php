@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Waglpz\Webapp\Middleware\FirewallMiddleware;
-use Waglpz\Webapp\Security\AuthStorage;
+use Waglpz\Webapp\Security\AuthStorageInMemory;
 use Waglpz\Webapp\Security\Firewall;
 
 final class FirewallMiddlewareTest extends TestCase
@@ -16,13 +16,13 @@ final class FirewallMiddlewareTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        (new AuthStorage())->reset();
+        (new AuthStorageInMemory())->reset();
     }
 
     /** @test */
     public function itHasACorrectBehaviour(): void
     {
-        $authStorage        = new AuthStorage();
+        $authStorage        = new AuthStorageInMemory();
         $authStorage->roles = ['ROLE_ABC'];
         $regeln             = [
             '/abc' => ['ROLE_ABC'],
@@ -40,7 +40,7 @@ final class FirewallMiddlewareTest extends TestCase
     /** @test */
     public function itThrownForbiddenExceptionWithStatusCode403(): void
     {
-        $authStorage        = new AuthStorage();
+        $authStorage        = new AuthStorageInMemory();
         $authStorage->roles = ['ROLE_ABC'];
         $regeln             = [
             '/abc' => ['ROLE_ABC'],

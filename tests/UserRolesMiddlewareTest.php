@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Waglpz\Webapp\Middleware\UserRolesMiddleware;
-use Waglpz\Webapp\Security\AuthStorage;
+use Waglpz\Webapp\Security\AuthStorageInMemory;
 use Waglpz\Webapp\Security\InMemoryUserAuthData;
 use Waglpz\Webapp\Security\UserAuthRolesProvider;
 
@@ -17,13 +17,13 @@ final class UserRolesMiddlewareTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        (new AuthStorage())->reset();
+        (new AuthStorageInMemory())->reset();
     }
 
     /** @test */
     public function itHasACorrectBehaviourForKnownUser(): void
     {
-        $authStorage        = new AuthStorage();
+        $authStorage        = new AuthStorageInMemory();
         $authStorage->email = 'tester@testing';
 
         $authData           = [
@@ -48,7 +48,7 @@ final class UserRolesMiddlewareTest extends TestCase
     /** @test */
     public function itHasACorrectBehaviourForUnknownUser(): void
     {
-        $authStorage        = new AuthStorage();
+        $authStorage        = new AuthStorageInMemory();
         $authStorage->email = 'tester+1@testing';
 
         $authData           = [
@@ -73,7 +73,7 @@ final class UserRolesMiddlewareTest extends TestCase
     /** @test */
     public function itHasACorrectBehaviourFromScratch(): void
     {
-        $authStorage        = new AuthStorage();
+        $authStorage        = new AuthStorageInMemory();
         $authData           = [];
         $authDataAdapter    = new InMemoryUserAuthData($authData);
         $rolesProvider      = new UserAuthRolesProvider($authDataAdapter);
