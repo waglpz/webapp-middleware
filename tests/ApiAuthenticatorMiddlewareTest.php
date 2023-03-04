@@ -4,23 +4,31 @@ declare(strict_types=1);
 
 namespace Waglpz\Webapp\Middleware\Tests;
 
+use Phpro\ApiProblem\Exception\ApiProblemException;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Waglpz\Webapp\Middleware\ApiAuthenticatorMiddleware;
-use Waglpz\Webapp\Security\ApiBasicAuthenticator;
+use Waglpz\Webapp\Security\AuthenticatorBasic;
 use Waglpz\Webapp\Security\AuthStorageInMemory;
-use Waglpz\Webapp\Security\InMemoryUserAuthData;
+use Waglpz\Webapp\Security\CredentialDataAdapterInMemory;
+use Waglpz\Webapp\Security\CredentialDataDecoderInMemoryDefault;
 
 final class ApiAuthenticatorMiddlewareTest extends TestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
+
         (new AuthStorageInMemory())->reset();
     }
 
-    /** @test */
+    /**
+     * @throws Exception|ApiProblemException
+     *
+     * @test
+     */
     public function itHasACorrectBehaviourForKnownUser(): void
     {
         $authStorage = new AuthStorageInMemory();
@@ -32,14 +40,15 @@ final class ApiAuthenticatorMiddlewareTest extends TestCase
                 'passwordHash' => '$2y$10$tJO/FTD2bHwVMQ2qolIT9.zs31ixnjStHiHfgn8dN/aGI/tBjP6Jm',
             ],
         ];
-        $authDataAdapter                 = new InMemoryUserAuthData($authData);
-        $authenticator                   = new ApiBasicAuthenticator($authDataAdapter);
+        $decoder                         = new CredentialDataDecoderInMemoryDefault();
+        $authDataAdapter                 = new CredentialDataAdapterInMemory($authData, $decoder);
+        $authenticator                   = new AuthenticatorBasic($authDataAdapter);
         $apiBasicAuthenticatorMiddleware = new ApiAuthenticatorMiddleware($authenticator, $authStorage);
 
         $request     = $this->createMock(ServerRequestInterface::class);
         $requestData = [
             'PHP_AUTH_USER' => 'tester@testing',
-            'PHP_AUTH_PW' => 'password',
+            'PHP_AUTH_PW'   => 'password',
         ];
         $request->expects(self::once())->method('getServerParams')->willReturn($requestData);
         $response = $this->createMock(ResponseInterface::class);
@@ -49,7 +58,11 @@ final class ApiAuthenticatorMiddlewareTest extends TestCase
         self::assertSame('tester@testing', $authStorage->email);
     }
 
-    /** @test */
+    /**
+     * @throws Exception
+     *
+     * @test
+     */
     public function itThrownUnauthorizedApiProblemExceptionIfUserNotAuthenticated(): void
     {
         $authStorage = new AuthStorageInMemory();
@@ -61,20 +74,21 @@ final class ApiAuthenticatorMiddlewareTest extends TestCase
                 'passwordHash' => '$2y$10$tJO/FTD2bHwVMQ2qolIT9.zs31ixnjStHiHfgn8dN/aGI/tBjP6Jm',
             ],
         ];
-        $authDataAdapter                 = new InMemoryUserAuthData($authData);
-        $authenticator                   = new ApiBasicAuthenticator($authDataAdapter);
+        $decoder                         = new CredentialDataDecoderInMemoryDefault();
+        $authDataAdapter                 = new CredentialDataAdapterInMemory($authData, $decoder);
+        $authenticator                   = new AuthenticatorBasic($authDataAdapter);
         $apiBasicAuthenticatorMiddleware = new ApiAuthenticatorMiddleware($authenticator, $authStorage);
 
         $request     = $this->createMock(ServerRequestInterface::class);
         $requestData = [
             'PHP_AUTH_USER' => 'tester@testing',
-            'PHP_AUTH_PW' => 'wrong',
+            'PHP_AUTH_PW'   => 'wrong',
         ];
         $request->expects(self::once())->method('getServerParams')->willReturn($requestData);
         $response = $this->createMock(ResponseInterface::class);
         $next     = static fn (ServerRequestInterface $request) => $response;
 
-        $this->expectException(\Phpro\ApiProblem\Exception\ApiProblemException::class);
+        $this->expectException(ApiProblemException::class);
         $this->expectExceptionMessage('Unauthorized');
         $this->expectExceptionCode(401);
 

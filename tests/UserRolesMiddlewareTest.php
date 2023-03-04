@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Waglpz\Webapp\Middleware\Tests;
 
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Waglpz\Webapp\Middleware\UserRolesMiddleware;
 use Waglpz\Webapp\Security\AuthStorageInMemory;
-use Waglpz\Webapp\Security\InMemoryUserAuthData;
+use Waglpz\Webapp\Security\CredentialDataAdapterInMemory;
+use Waglpz\Webapp\Security\CredentialDataDecoderInMemoryDefault;
 use Waglpz\Webapp\Security\UserAuthRolesProvider;
 
 final class UserRolesMiddlewareTest extends TestCase
@@ -17,10 +19,15 @@ final class UserRolesMiddlewareTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         (new AuthStorageInMemory())->reset();
     }
 
-    /** @test */
+    /**
+     * @throws Exception
+     *
+     * @test
+     */
     public function itHasACorrectBehaviourForKnownUser(): void
     {
         $authStorage        = new AuthStorageInMemory();
@@ -29,11 +36,12 @@ final class UserRolesMiddlewareTest extends TestCase
         $authData           = [
             [
                 'username'     => 'tester@testing',
-                'role'         => 'ROLE_TEST',
+                'roles'         => 'ROLE_TEST',
                 'passwordHash' => 'xxx',
             ],
         ];
-        $authDataAdapter    = new InMemoryUserAuthData($authData);
+        $decoder            = new CredentialDataDecoderInMemoryDefault();
+        $authDataAdapter    = new CredentialDataAdapterInMemory($authData, $decoder);
         $rolesProvider      = new UserAuthRolesProvider($authDataAdapter);
         $usrRolesMiddleware = new UserRolesMiddleware($rolesProvider, $authStorage);
 
@@ -45,7 +53,11 @@ final class UserRolesMiddlewareTest extends TestCase
         self::assertSame(['ROLE_TEST'], $authStorage->roles);
     }
 
-    /** @test */
+    /**
+     * @throws Exception
+     *
+     * @test
+     */
     public function itHasACorrectBehaviourForUnknownUser(): void
     {
         $authStorage        = new AuthStorageInMemory();
@@ -58,7 +70,8 @@ final class UserRolesMiddlewareTest extends TestCase
                 'passwordHash' => 'xxx',
             ],
         ];
-        $authDataAdapter    = new InMemoryUserAuthData($authData);
+        $decoder            = new CredentialDataDecoderInMemoryDefault();
+        $authDataAdapter    = new CredentialDataAdapterInMemory($authData, $decoder);
         $rolesProvider      = new UserAuthRolesProvider($authDataAdapter);
         $usrRolesMiddleware = new UserRolesMiddleware($rolesProvider, $authStorage);
 
@@ -70,12 +83,17 @@ final class UserRolesMiddlewareTest extends TestCase
         self::assertSame(['ROLE_NOT_AUTHENTICATED'], $authStorage->roles);
     }
 
-    /** @test */
+    /**
+     * @throws Exception
+     *
+     * @test
+     */
     public function itHasACorrectBehaviourFromScratch(): void
     {
         $authStorage        = new AuthStorageInMemory();
         $authData           = [];
-        $authDataAdapter    = new InMemoryUserAuthData($authData);
+        $decoder            = new CredentialDataDecoderInMemoryDefault();
+        $authDataAdapter    = new CredentialDataAdapterInMemory($authData, $decoder);
         $rolesProvider      = new UserAuthRolesProvider($authDataAdapter);
         $usrRolesMiddleware = new UserRolesMiddleware($rolesProvider, $authStorage);
 

@@ -14,13 +14,10 @@ use Waglpz\Webapp\Security\Forbidden;
 
 final class FirewallMiddleware implements Middleware
 {
-    private Firewalled $firewall;
-    private AuthStorage $authStorage;
-
-    public function __construct(Firewalled $firewall, AuthStorage $authStorage)
-    {
-        $this->firewall    = $firewall;
-        $this->authStorage = $authStorage;
+    public function __construct(
+        private readonly Firewalled $firewall,
+        private readonly AuthStorage $authStorage,
+    ) {
     }
 
     /** @throws ApiProblemException */

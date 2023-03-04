@@ -11,15 +11,10 @@ use Waglpz\Webapp\Security\UserRolesProvider;
 
 final class UserRolesMiddleware implements Middleware
 {
-    private AuthStorage $authStorage;
-    private UserRolesProvider $rolesProvider;
-
     public function __construct(
-        UserRolesProvider $rolesProvider,
-        AuthStorage $authStorage
+        private readonly UserRolesProvider $rolesProvider,
+        private readonly AuthStorage $authStorage,
     ) {
-        $this->authStorage   = $authStorage;
-        $this->rolesProvider = $rolesProvider;
     }
 
     public function __invoke(ServerRequestInterface $request, callable $next): ResponseInterface

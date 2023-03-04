@@ -13,13 +13,10 @@ use Waglpz\Webapp\Security\AuthStorage;
 
 final class ApiAuthenticatorMiddleware implements Middleware
 {
-    private Authenticator $authenticator;
-    private AuthStorage $authStorage;
-
-    public function __construct(Authenticator $authenticator, AuthStorage $authStorage)
-    {
-        $this->authenticator = $authenticator;
-        $this->authStorage   = $authStorage;
+    public function __construct(
+        private readonly Authenticator $authenticator,
+        private readonly AuthStorage $authStorage,
+    ) {
     }
 
     /** @throws ApiProblemException */

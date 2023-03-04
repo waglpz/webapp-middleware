@@ -9,12 +9,12 @@ use Psr\Http\Message\ServerRequestInterface;
 
 final class MiddlewareStackFactory
 {
-    /** @var callable[]|MiddlewareStackFactory[] */
-    private array $middlewares;
     /** @var callable|null */
     private $middlewareStack = null;
+    /** array<Middleware|callable> */
+    private $middlewares;
 
-    /** @param array<MiddlewareStackFactory|callable> $middlewares */
+    /** @param array<Middleware|callable> $middlewares */
     public function __construct(array $middlewares)
     {
         \krsort($middlewares);
@@ -28,7 +28,7 @@ final class MiddlewareStackFactory
         $newSelf->middlewareStack = \array_reduce(
             $this->middlewares,
             static fn ($car, callable $cur) => static fn (ServerRequestInterface $request) => $cur($request, $car),
-            $finalHandler
+            $finalHandler,
         );
         \assert($newSelf->middlewareStack instanceof \Closure);
 

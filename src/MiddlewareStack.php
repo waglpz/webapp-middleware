@@ -19,7 +19,7 @@ final class MiddlewareStack
         $middleware = \array_reduce(
             $middleware,
             static fn ($car, callable $cur) => static fn (ServerRequestInterface $request) => $cur($request, $car),
-            $finalistCaller
+            $finalistCaller,
         );
         \assert($middleware instanceof \Closure);
 

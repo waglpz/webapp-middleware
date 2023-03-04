@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Waglpz\Webapp\Middleware\Tests;
 
+use Phpro\ApiProblem\Exception\ApiProblemException;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -16,10 +18,15 @@ final class FirewallMiddlewareTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         (new AuthStorageInMemory())->reset();
     }
 
-    /** @test */
+    /**
+     * @throws Exception|ApiProblemException
+     *
+     * @test
+     */
     public function itHasACorrectBehaviour(): void
     {
         $authStorage        = new AuthStorageInMemory();
@@ -37,7 +44,11 @@ final class FirewallMiddlewareTest extends TestCase
         $firewallMiddleware($request, $next);
     }
 
-    /** @test */
+    /**
+     * @throws Exception
+     *
+     * @test
+     */
     public function itThrownForbiddenExceptionWithStatusCode403(): void
     {
         $authStorage        = new AuthStorageInMemory();
@@ -53,7 +64,7 @@ final class FirewallMiddlewareTest extends TestCase
         $response = $this->createMock(ResponseInterface::class);
         $next     = static fn (ServerRequestInterface $request) => $response;
 
-        $this->expectException(\Phpro\ApiProblem\Exception\ApiProblemException::class);
+        $this->expectException(ApiProblemException::class);
         $this->expectExceptionMessage('Forbidden');
         $this->expectExceptionCode(403);
         $firewallMiddleware($request, $next);

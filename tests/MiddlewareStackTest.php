@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Waglpz\Webapp\Middleware\Tests;
 
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -13,79 +13,112 @@ use Waglpz\Webapp\Middleware\MiddlewareStack;
 
 final class MiddlewareStackTest extends TestCase
 {
-    /** @var \ArrayObject<int, int|string> */
-    public \ArrayObject $p;
-
-    /** @test */
-    public function itHasACorrectBehaviour(): void
+    /**
+     * @param array<int,string> $middlewares
+     * @param array<int,string> $expectation
+     *
+     * @throws Exception
+     *
+     * @test
+     * @dataProvider dataForTest
+     */
+    public function itHasACorrectBehaviour(array $middlewares, array $expectation): void
     {
-        $this->p = new \ArrayObject();
+        $preserver   = new \ArrayObject();
+        $middlewares = \array_map(fn ($id) => $this->createAMiddleware($id, $preserver), $middlewares);
+        $finalist    = $this->createLastMiddleware($preserver);
 
-        $middlewares = [
-            $this->createAMiddleware(1),
-            $this->createAMiddleware(2),
-            $this->createAMiddleware(3),
-        ];
-
-        $finalist = $this->createLastMiddleware();
-        $r        = new MiddlewareStack($middlewares, $finalist);
-        $request  = $this->createMock(ServerRequestInterface::class);
-
-        $response = $r($request);
-        $fact     = $response->getBody();
-        \assert($fact instanceof \ArrayObject);
-
-        self::assertEquals([1, 2, 3, 'last'], $fact->getArrayCopy());
+        $middlewareStack = new MiddlewareStack($middlewares, $finalist);
+        $request         = $this->createMock(ServerRequestInterface::class);
+        $response        = $middlewareStack($request);
+        $fact            = $response->getBody();
+        self::assertSame('finalist was called', (string) $fact);
+        self::assertEquals($expectation, $preserver->getArrayCopy());
     }
 
-    private function createAMiddleware(int $identifier): Middleware
+    public static function dataForTest(): \Generator
     {
-        $holder = $this->p;
+        yield 'Manual fixed order middlewares will be executed in right order' => [
+            // manual created index for sorting middlewares started from 1
+            [
+                1 => 'middleware_n1_tbd_as_1',
+                4 => 'middleware_n2_tbd_as_4',
+                3 => 'middleware_n3_tbd_as_3',
+                2 => 'middleware_n4_tbd_as_2',
+            ],
+            [
+                'middleware_n1_tbd_as_1',
+                'middleware_n4_tbd_as_2',
+                'middleware_n3_tbd_as_3',
+                'middleware_n2_tbd_as_4',
+                'last',
+            ],
+        ];
 
-        return new class ($identifier, $holder) implements Middleware {
-            private int $identifier;
-            /** @phpstan-ignore-next-line */
-            private \ArrayObject $holder;
+        yield 'Auto ordered middlewares will be executed in same order' => [
+            // auto created index on the fly started from 0
+            [
+                'middleware_tbd_as_1',
+                'middleware_tbd_as_2',
+                'middleware_tbd_as_3',
+                'middleware_tbd_as_4',
+            ],
+            [
+                'middleware_tbd_as_1',
+                'middleware_tbd_as_2',
+                'middleware_tbd_as_3',
+                'middleware_tbd_as_4',
+                'last',
+            ],
+        ];
+    }
 
-            /** @param \ArrayObject<int, int|string> $holder */
-            public function __construct(int $identifier, \ArrayObject $holder)
-            {
-                $this->identifier = $identifier;
-                $this->holder     = $holder;
+    /** @param \ArrayObject<int,string> $preserver */
+    private function createAMiddleware(string $identifier, \ArrayObject $preserver): Middleware
+    {
+        return new class ($identifier, $preserver) implements Middleware {
+            /** @param \ArrayObject<int,string> $preserver */
+            public function __construct(
+                private readonly string $identifier,
+                private readonly \ArrayObject $preserver,
+            ) {
             }
 
             public function __invoke(ServerRequestInterface $request, callable $next): ResponseInterface
             {
-                $this->holder[] = $this->identifier;
+                $this->preserver->append($this->identifier);
 
                 return $next($request);
             }
         };
     }
 
-    private function createLastMiddleware(): callable
+    /**
+     * @param \ArrayObject<int,string> $preserver
+     *
+     * @throws Exception
+     */
+    private function createLastMiddleware(\ArrayObject $preserver): callable
     {
         $response = $this->createMock(ResponseInterface::class);
         $response->expects(self::once())->method('getBody')->willReturnCallback(
-            function () {
-                $this->p[] = 'last';
-
-                return $this->p;
-            }
+            static function () {
+                return 'finalist was called';
+            },
         );
 
-        return new class ($response) {
-            /** @var ResponseInterface|MockObject */
-            private $response;
-
-            /** @param ResponseInterface|MockObject $response */
-            public function __construct($response)
-            {
-                $this->response = $response;
+        return new class ($response, $preserver) {
+            /** @param \ArrayObject<int,string> $preserver */
+            public function __construct(
+                private readonly ResponseInterface $response,
+                private readonly \ArrayObject $preserver,
+            ) {
             }
 
-            public function __invoke(ServerRequestInterface $request): ResponseInterface
+            public function __invoke(): ResponseInterface
             {
+                $this->preserver->append('last');
+
                 return $this->response;
             }
         };
