@@ -25,6 +25,7 @@
   },
   "require-dev": {
     "doctrine/coding-standard": "^11.1",
+    "nunomaduro/mock-final-classes": "^1.2",
     "phpstan/extension-installer": "^1.1",
     "phpstan/phpstan": "^1.10",
     "phpstan/phpstan-deprecation-rules": "^1.0",
@@ -36,7 +37,7 @@
     "phpunit/phpunit": "^10.0",
     "roave/security-advisories": "dev-latest",
     "squizlabs/php_codesniffer": "^3.7",
-    "symfony/var-dumper": "^5.4"
+    "symfony/var-dumper": "^7.0"
   },
   "conflict": {
   },
@@ -63,6 +64,7 @@
     "waglpz:generate:password": "php bin/generate-password.php",
     "waglpz:test:normal": "phpunit --colors=always tests --no-coverage --order-by random",
     "waglpz:test:coverage": "phpunit --colors=always tests",
-    "waglpz:test:ci": "phpunit --colors=always tests --no-coverage --no-logging --do-not-cache-result --order-by random"
+    "waglpz:test:ci": "phpunit --colors=always tests --no-coverage --no-logging --do-not-cache-result --order-by random",
+    "waglpz:var:dump:server": "var-dump-server"
   }
 }
