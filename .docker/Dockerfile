@@ -4,7 +4,7 @@ ARG APPUID=0
 ARG APPUGID=0
 ARG DUSER=www-data
 
-ENV COMPOSER_HOME /var/www/composer
+ENV COMPOSER_HOME=/var/www/composer
 
 RUN if [ ${APPUID} != 0 -a $(getent passwd ${DUSER}) ]; then \
         userdel -f ${DUSER};                \
