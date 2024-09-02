@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 2.2.0 (2024-09-02)
+
+
+### Features
+
+* Add middleware stack DIC configuration file ([f17eb2b](https://github.com/waglpz/webapp-middleware/commit/f17eb2b908d99ae4714a1ba0d9b5f4812bbbbbcb))
+
+
 ## 2.1.0 (2024-09-02)
 
 
