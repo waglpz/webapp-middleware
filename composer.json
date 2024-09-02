@@ -2,7 +2,7 @@
   "name": "waglpz/webapp-middleware",
   "description": "Web App Middleware Components",
   "license": "MIT",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "type": "library",
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -20,9 +20,10 @@
   "require": {
     "php": "^8.2",
     "ext-apcu": "*",
+    "moddengine/dice": "^4.1",
     "phpro/api-problem": "^1.6",
     "psr/http-message": "^1.0",
-    "waglpz/webapp-security": "^v2.0"
+    "waglpz/webapp-security": "^2.1"
   },
   "require-dev": {
     "doctrine/coding-standard": "^11.1",
